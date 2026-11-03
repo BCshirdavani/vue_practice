@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import ClockView from '../views/ClockView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,6 +23,11 @@ const router = createRouter({
       name: 'seadragon',
       component: () => import('../views/SeaDragon.vue'),
     },
+    {
+      path: "/clock",
+      name: "clock",
+      component: ClockView
+    }
   ],
 })
 
