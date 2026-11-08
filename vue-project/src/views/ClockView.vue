@@ -7,7 +7,7 @@ const connected = ref(false);
 let socket = null;
 
 onMounted(() => {
-  socket = new WebSocket("ws://localhost:8000/ws/socketclock/");
+  socket = new WebSocket(import.meta.env.VITE_CLOCK_SOCKET_URL);
 
   socket.onopen = () => {
     console.log("WebSocket connected!");

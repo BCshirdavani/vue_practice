@@ -30,7 +30,7 @@ onMounted(async () => {
   })
 
   try {
-    const response = await fetch('http://127.0.0.1:8000/imagetest/', {
+    const response = await fetch(import.meta.env.VITE_IMAGE_TEST_URL, {
       signal: requestController.signal,
     })
 
