@@ -38,6 +38,6 @@ function toggleColorMode() {
         <RouterView />
       </div>
     </main>
-    <Toaster :theme="colorMode" position="top-center" :offset="24" :duration="4000" close-button />
+    <Toaster :theme="colorMode === 'auto' ? 'system' : colorMode" position="top-center" :offset="24" :duration="4000" close-button />
   </SidebarProvider>
 </template>
