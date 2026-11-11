@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import OpenSeadragon from 'openseadragon'
+import { Button } from '@/components/ui/button'
 
 const viewerElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
@@ -66,9 +67,9 @@ onBeforeUnmount(() => {
     <p>Scroll or pinch to zoom. Drag to pan.</p>
 
     <fieldset class="controls" :disabled="isLoading || Boolean(error)" aria-label="Image controls">
-      <button type="button" @click="viewer?.viewport.zoomBy(1.5)">Zoom in</button>
-      <button type="button" @click="viewer?.viewport.zoomBy(1 / 1.5)">Zoom out</button>
-      <button type="button" @click="viewer?.viewport.goHome()">Reset view</button>
+      <Button type="button" variant="outline" :disabled="isLoading || Boolean(error)" @click="viewer?.viewport.zoomBy(1.5)">Zoom in</Button>
+      <Button type="button" variant="outline" :disabled="isLoading || Boolean(error)" @click="viewer?.viewport.zoomBy(1 / 1.5)">Zoom out</Button>
+      <Button type="button" variant="secondary" :disabled="isLoading || Boolean(error)" @click="viewer?.viewport.goHome()">Reset view</Button>
     </fieldset>
 
     <p v-if="isLoading" role="status">Loading image…</p>
