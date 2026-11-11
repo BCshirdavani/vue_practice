@@ -4,14 +4,75 @@ import OpenSeadragon from 'openseadragon'
 import { Button } from '@/components/ui/button'
 import { toast } from 'vue-sonner'
 
-
 const viewerElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
 const error = ref('')
+const imageList = ref<unknown>(null)
+const isListLoading = ref(true)
+const imageListError = ref('')
 const requestController = new AbortController()
 
 let viewer: OpenSeadragon.Viewer | undefined
 let imageUrl: string | undefined
+
+async function loadImage() {
+  try {
+    const response = await fetch(import.meta.env.VITE_IMAGE_TEST_URL, {
+      signal: requestController.signal,
+    })
+
+    if (!response.ok) {
+      isLoading.value = false
+      error.value = `Image request failed (HTTP ${response.status}).`
+      toast.error(error.value)
+      console.error(error.value)
+      return
+    }
+
+    const image = await response.blob()
+    if (requestController.signal.aborted || !viewer) return
+
+    imageUrl = URL.createObjectURL(image)
+    // The viewer's open/open-failed events finish the image loading state.
+    viewer.open({ tileSource: { type: 'image', url: imageUrl } })
+  } catch (cause) {
+    if (requestController.signal.aborted) return
+
+    isLoading.value = false
+    error.value = cause instanceof Error ? cause.message : 'Unable to load the image.'
+    toast.error(error.value)
+    console.error(error.value, cause)
+  }
+}
+
+async function loadImageList() {
+  try {
+    const response = await fetch(import.meta.env.VITE_IMAGE_LIST_URL, {
+      signal: requestController.signal,
+    })
+
+    if (!response.ok) {
+      imageListError.value = `Image list request failed (HTTP ${response.status}).`
+      toast.error(imageListError.value)
+      console.error(imageListError.value)
+      return
+    }
+
+    // Keep the response untyped until the API's JSON structure is defined.
+    const data: unknown = await response.json()
+    if (requestController.signal.aborted) return
+
+    imageList.value = data
+  } catch (cause) {
+    if (requestController.signal.aborted) return
+
+    imageListError.value = cause instanceof Error ? cause.message : 'Unable to load the image list.'
+    toast.error(imageListError.value)
+    console.error(imageListError.value, cause)
+  } finally {
+    if (!requestController.signal.aborted) isListLoading.value = false
+  }
+}
 
 onMounted(async () => {
   if (!viewerElement.value) return
@@ -30,30 +91,11 @@ onMounted(async () => {
   viewer.addHandler('open-failed', () => {
     isLoading.value = false
     error.value = 'The server response could not be displayed as an image.'
+    toast.error(error.value)
+    console.error(error.value)
   })
 
-  try {
-    const response = await fetch(import.meta.env.VITE_IMAGE_TEST_URL, {
-      signal: requestController.signal,
-    })
-
-    if (!response.ok) {
-      toast.error(`Image request failed (HTTP ${response.status}).`);
-      console.error(`Image request failed (HTTP ${response.status}).`);
-    }
-
-    const image = await response.blob()
-    if (requestController.signal.aborted) return
-
-    imageUrl = URL.createObjectURL(image)
-    // A regular image response uses an image tile source, rather than a DZI manifest.
-    viewer.open({ tileSource: { type: 'image', url: imageUrl } })
-  } catch (cause) {
-    if (requestController.signal.aborted) return
-
-    isLoading.value = false
-    error.value = cause instanceof Error ? cause.message : 'Unable to load the image.'
-  }
+  await Promise.allSettled([loadImage(), loadImageList()])
 })
 
 onBeforeUnmount(() => {
@@ -77,6 +119,9 @@ onBeforeUnmount(() => {
 
     <p v-if="isLoading" role="status">Loading image…</p>
     <p v-else-if="error" role="alert">{{ error }}</p>
+
+    <p v-if="isListLoading" role="status">Loading image list…</p>
+    <p v-else-if="imageListError" role="alert">{{ imageListError }}</p>
 
     <div ref="viewerElement" class="viewer" :aria-busy="isLoading"></div>
   </section>
