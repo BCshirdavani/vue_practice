@@ -1,5 +1,11 @@
+
+<script setup lang="ts">
+import {toast} from "vue-sonner";
+
+</script>
+
 <template>
-  <div class="about">
+  <div class="about" @click="toast.warning('This view currently does not do anything 🤷🏻‍♂️')">
     <h1>This is an about page</h1>
   </div>
 </template>

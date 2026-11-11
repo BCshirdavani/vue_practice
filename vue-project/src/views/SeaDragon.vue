@@ -2,6 +2,8 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import OpenSeadragon from 'openseadragon'
 import { Button } from '@/components/ui/button'
+import { toast } from 'vue-sonner'
+
 
 const viewerElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
@@ -36,7 +38,8 @@ onMounted(async () => {
     })
 
     if (!response.ok) {
-      throw new Error(`Image request failed (HTTP ${response.status}).`)
+      toast.error(`Image request failed (HTTP ${response.status}).`);
+      console.error(`Image request failed (HTTP ${response.status}).`);
     }
 
     const image = await response.blob()

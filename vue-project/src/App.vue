@@ -5,6 +5,7 @@ import { RouterView } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Toaster } from '@/components/ui/sonner'
 
 // Apply one light/dark mode to the entire app; default to the system preference.
 const colorMode = useColorMode()
@@ -37,5 +38,6 @@ function toggleColorMode() {
         <RouterView />
       </div>
     </main>
+    <Toaster :theme="colorMode" position="top-center" :offset="24" :duration="4000" close-button />
   </SidebarProvider>
 </template>
