@@ -31,7 +31,7 @@ watch(() => route.fullPath, () => setOpenMobile(false))
   <Sidebar>
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Application</SidebarGroupLabel>
+        <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarGroupContent>
           <nav aria-label="Main navigation">
             <SidebarMenu>
