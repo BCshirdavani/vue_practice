@@ -109,8 +109,12 @@ onBeforeUnmount(() => {
 <template>
   <section class="sea-dragon" aria-label="Image viewer">
     <h1>Image viewer</h1>
-    <p>Scroll or pinch to zoom. Drag to pan.</p>
 
+    <div>
+
+    </div>
+
+    <p>Scroll or pinch to zoom. Drag to pan.</p>
     <fieldset class="controls" :disabled="isLoading || Boolean(error)" aria-label="Image controls">
       <Button type="button" variant="outline" :disabled="isLoading || Boolean(error)" @click="viewer?.viewport.zoomBy(1.5)">Zoom in</Button>
       <Button type="button" variant="outline" :disabled="isLoading || Boolean(error)" @click="viewer?.viewport.zoomBy(1 / 1.5)">Zoom out</Button>
