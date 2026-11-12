@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import OpenSeadragon from 'openseadragon'
 import { Button } from '@/components/ui/button'
 import { toast } from 'vue-sonner'
@@ -14,13 +14,13 @@ import {
 } from '@/components/ui/select'
 
 const viewerElement = ref<HTMLDivElement | null>(null)
-const isLoading = ref(true)
+const isLoading = ref(false)
 const error = ref('')
 const imageList = ref<unknown>(null)
 const isListLoading = ref(true)
 const imageListError = ref('')
 const requestController = new AbortController()
-const selectedImage = ref<string>('');
+const selectedImage = ref<AvailableImage>()
 interface AvailableImage {
   id: number
   label: string
@@ -33,23 +33,31 @@ function isAvailableImage(value: unknown): value is AvailableImage {
     && 'label' in value && typeof value.label === 'string'
 }
 
-const onImageChange = () => {
-  console.log('Selected image changed:', selectedImage.value)
+const onImageChange = async () => {
+  const id = selectedImage.value?.id
+  if (id == null) return
+
+  const imagePath = import.meta.env.VITE_IMAGE_GET_ID_URL.replace('{:id}', encodeURIComponent(String(id)))
+  const url = new URL(imagePath, window.location.origin)
+
+  await loadImage(url)
 }
 
 let viewer: OpenSeadragon.Viewer | undefined
 let imageUrl: string | undefined
+let imageRequestId = 0
 
-watch(selectedImage, (newValue, oldValue) => {
-  console.log('Selected image changed:', oldValue, '→', newValue)
-  // Load the selected image here.
-})
+async function loadImage(url: URL /*| URL = import.meta.env.VITE_IMAGE_TEST_URL*/) {
+  const requestId = ++imageRequestId
+  isLoading.value = true
+  error.value = ''
 
-async function loadImage() {
   try {
-    const response = await fetch(import.meta.env.VITE_IMAGE_TEST_URL, {
+    const response = await fetch(url, {
       signal: requestController.signal,
     })
+
+    if (requestController.signal.aborted || requestId !== imageRequestId) return
 
     if (!response.ok) {
       isLoading.value = false
@@ -60,13 +68,15 @@ async function loadImage() {
     }
 
     const image = await response.blob()
-    if (requestController.signal.aborted || !viewer) return
+    if (requestController.signal.aborted || requestId !== imageRequestId || !viewer) return
 
+    const previousImageUrl = imageUrl
     imageUrl = URL.createObjectURL(image)
     // The viewer's open/open-failed events finish the image loading state.
     viewer.open({ tileSource: { type: 'image', url: imageUrl } })
+    if (previousImageUrl) URL.revokeObjectURL(previousImageUrl)
   } catch (cause) {
-    if (requestController.signal.aborted) return
+    if (requestController.signal.aborted || requestId !== imageRequestId) return
 
     isLoading.value = false
     error.value = cause instanceof Error ? cause.message : 'Unable to load the image.'
@@ -135,7 +145,7 @@ onMounted(async () => {
     console.error(error.value)
   })
 
-  await Promise.allSettled([loadImage(), loadImageList()])
+  await Promise.allSettled([/*loadImage(),*/ loadImageList()])
 })
 
 onBeforeUnmount(() => {
