@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Spinner } from "@/components/ui/spinner";
 
 const viewerElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(false)
@@ -162,6 +163,7 @@ onBeforeUnmount(() => {
 
     <div>
       <p v-if="isListLoading" role="status">Loading image list…</p>
+      <Spinner v-if="isListLoading" class="size-10" />
       <p v-else-if="imageListError" role="alert">{{ imageListError }}</p>
         <Select v-model="selectedImage" @update:model-value="onImageChange">
           <SelectTrigger class="w-[180px]">
@@ -186,6 +188,7 @@ onBeforeUnmount(() => {
     </fieldset>
 
     <p v-if="isLoading" role="status">Loading image…</p>
+    <Spinner v-if="isLoading" class="size-10"  />
     <p v-else-if="error" role="alert">{{ error }}</p>
 
 
