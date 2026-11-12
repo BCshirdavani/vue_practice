@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import OpenSeadragon from 'openseadragon'
 import { Button } from '@/components/ui/button'
 import { toast } from 'vue-sonner'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const viewerElement = ref<HTMLDivElement | null>(null)
 const isLoading = ref(true)
@@ -11,9 +20,30 @@ const imageList = ref<unknown>(null)
 const isListLoading = ref(true)
 const imageListError = ref('')
 const requestController = new AbortController()
+const selectedImage = ref<string>('');
+interface AvailableImage {
+  id: number
+  label: string
+}
+const availableImages = ref<AvailableImage[]>([])
+
+function isAvailableImage(value: unknown): value is AvailableImage {
+  return typeof value === 'object' && value !== null
+    && 'id' in value && typeof value.id === 'number'
+    && 'label' in value && typeof value.label === 'string'
+}
+
+const onImageChange = () => {
+  console.log('Selected image changed:', selectedImage.value)
+}
 
 let viewer: OpenSeadragon.Viewer | undefined
 let imageUrl: string | undefined
+
+watch(selectedImage, (newValue, oldValue) => {
+  console.log('Selected image changed:', oldValue, '→', newValue)
+  // Load the selected image here.
+})
 
 async function loadImage() {
   try {
@@ -58,11 +88,21 @@ async function loadImageList() {
       return
     }
 
-    // Keep the response untyped until the API's JSON structure is defined.
+    // Validate the API response before using it as component state.
     const data: unknown = await response.json()
     if (requestController.signal.aborted) return
 
+    if (typeof data !== 'object' || data === null
+      || !('images' in data) || !Array.isArray(data.images)
+      || !data.images.every(isAvailableImage)) {
+      imageListError.value = 'The image list response has an invalid format.'
+      toast.error(imageListError.value)
+      console.error(imageListError.value, data)
+      return
+    }
+
     imageList.value = data
+    availableImages.value = data.images.map(({ id, label }) => ({ id, label }))
   } catch (cause) {
     if (requestController.signal.aborted) return
 
@@ -111,7 +151,22 @@ onBeforeUnmount(() => {
     <h1>Image viewer</h1>
 
     <div>
-
+      <p v-if="isListLoading" role="status">Loading image list…</p>
+      <p v-else-if="imageListError" role="alert">{{ imageListError }}</p>
+      <div> test </div>
+        <Select v-model="selectedImage" @update:model-value="onImageChange">
+          <SelectTrigger class="w-[180px]">
+            <SelectValue placeholder="Select an image" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Image Selection</SelectLabel>
+              <SelectItem v-for="image in availableImages" :key="image.id" :value="image">
+                {{ image.label }}
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
     </div>
 
     <p>Scroll or pinch to zoom. Drag to pan.</p>
@@ -124,8 +179,7 @@ onBeforeUnmount(() => {
     <p v-if="isLoading" role="status">Loading image…</p>
     <p v-else-if="error" role="alert">{{ error }}</p>
 
-    <p v-if="isListLoading" role="status">Loading image list…</p>
-    <p v-else-if="imageListError" role="alert">{{ imageListError }}</p>
+
 
     <div ref="viewerElement" class="viewer" :aria-busy="isLoading"></div>
   </section>
