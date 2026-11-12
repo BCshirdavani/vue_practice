@@ -163,7 +163,6 @@ onBeforeUnmount(() => {
     <div>
       <p v-if="isListLoading" role="status">Loading image list…</p>
       <p v-else-if="imageListError" role="alert">{{ imageListError }}</p>
-      <div> test </div>
         <Select v-model="selectedImage" @update:model-value="onImageChange">
           <SelectTrigger class="w-[180px]">
             <SelectValue placeholder="Select an image" />
